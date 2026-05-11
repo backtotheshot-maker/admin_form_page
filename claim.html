@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Claim — Garden Dispatch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark:#1a2e1a;--green-mid:#2d5a27;--green-bright:#4a9e3f;
+    --green-pale:#d4edcc;--cream:#f5f2eb;--ink:#1a1a18;--ink-mid:#3d3d38;
+    --ink-faint:#8a8a82;--border:#c8c4b8;--red:#c0392b;--red-bg:#fdf0ee;
+    --amber:#e67e22;--amber-bg:#fef3e2;--white:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Mono',monospace;background:var(--cream);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;}
+  .header{background:var(--green-dark);border-bottom:3px solid var(--green-bright);padding:16px 24px;display:flex;align-items:baseline;gap:12px;}
+  .header h1{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--white);}
+  .header .sub{font-size:11px;color:var(--green-bright);letter-spacing:1.5px;text-transform:uppercase;}
+  .container{max-width:480px;margin:0 auto;padding:32px 20px 60px;width:100%;}
+  .screen{display:none;}.screen.active{display:block;}
+  .loading-wrap{text-align:center;padding:60px 0;}
+  .spinner-large{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green-bright);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-text{font-size:13px;color:var(--ink-faint);}
+  .job-card{background:var(--white);border:1px solid var(--border);border-top:4px solid var(--green-bright);margin-bottom:24px;}
+  .job-card-header{background:var(--green-dark);padding:18px 20px;}
+  .job-card-header .label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--green-bright);margin-bottom:6px;}
+  .job-card-header .client{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--white);line-height:1.2;}
+  .job-details{padding:20px;}
+  .detail-row{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-icon{font-size:16px;flex-shrink:0;width:24px;text-align:center;margin-top:1px;}
+  .detail-content{flex:1;}
+  .detail-label{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
+  .detail-value{font-size:14px;color:var(--ink);line-height:1.4;}
+  .notes-value{font-size:13px;color:var(--ink-mid);font-style:italic;line-height:1.5;}
+  .pin-section{background:var(--white);border:1px solid var(--border);padding:24px 20px;margin-bottom:16px;}
+  .pin-title{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+  .pin-sub{font-size:12px;color:var(--ink-faint);margin-bottom:18px;line-height:1.5;}
+  .pin-inputs{display:flex;gap:10px;margin-bottom:18px;justify-content:center;}
+  .pin-digit{width:56px;height:64px;font-family:'Fraunces',serif;font-size:28px;font-weight:600;text-align:center;border:2px solid var(--border);background:var(--cream);color:var(--ink);outline:none;transition:border-color 0.15s;border-radius:0;appearance:none;}
+  .pin-digit:focus{border-color:var(--green-bright);background:var(--white);}
+  .pin-digit.error{border-color:var(--red);}
+  .pin-error{font-size:12px;color:var(--red);text-align:center;margin-bottom:12px;display:none;}
+  .claim-btn{width:100%;padding:16px;background:var(--green-mid);color:var(--white);border:none;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .claim-btn:hover:not(:disabled){background:var(--green-dark);}
+  .claim-btn:disabled{background:var(--ink-faint);cursor:not-allowed;}
+  .spinner-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite;display:none;}
+  .success-wrap{text-align:center;padding:40px 0 20px;}
+  .success-icon{width:72px;height:72px;background:var(--green-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);}
+  @keyframes popIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .success-title{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--green-dark);margin-bottom:8px;}
+  .success-sub{font-size:13px;color:var(--ink-faint);margin-bottom:28px;line-height:1.6;}
+  .success-card{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--green-bright);padding:20px;text-align:left;margin-bottom:12px;}
+  .success-card .sc-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:4px;}
+  .success-card .sc-value{font-size:14px;color:var(--ink);line-height:1.5;}
+  .sms-notice{font-size:12px;color:var(--green-mid);background:var(--green-pale);padding:12px 16px;border-left:3px solid var(--green-bright);margin-top:16px;}
+  .taken-wrap{text-align:center;padding:40px 0 20px;}
+  .taken-icon{width:72px;height:72px;background:var(--amber-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;}
+  .taken-title{font-family:'Fraunces',serif;font-size:24px;font-weight:600;color:var(--amber);margin-bottom:8px;}
+  .taken-sub{font-size:13px;color:var(--ink-faint);line-height:1.6;}
+  .error-wrap{text-align:center;padding:40px 0;}
+  .error-icon{font-size:40px;margin-bottom:16px;}
+  .error-title{font-family:'Fraunces',serif;font-size:20px;color:var(--red);margin-bottom:8px;}
+  .error-sub{font-size:13px;color:var(--ink-faint);line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Garden Dispatch</h1>
+  <span class="sub">Job Claim</span>
+</div>
+<div class="container">
+
+  <div class="screen active" id="screen-loading">
+    <div class="loading-wrap">
+      <div class="spinner-large"></div>
+      <p class="loading-text">Loading job details...</p>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-claim">
+    <div class="job-card">
+      <div class="job-card-header">
+        <div class="label">New Job Available</div>
+        <div class="client" id="jobClient"></div>
+      </div>
+      <div class="job-details">
+        <div class="detail-row">
+          <div class="detail-icon">📍</div>
+          <div class="detail-content">
+            <div class="detail-label">Address</div>
+            <div class="detail-value" id="jobAddress"></div>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-icon">📅</div>
+          <div class="detail-content">
+            <div class="detail-label">Date &amp; Time</div>
+            <div class="detail-value" id="jobDate"></div>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-icon">⏱</div>
+          <div class="detail-content">
+            <div class="detail-label">Estimated Hours</div>
+            <div class="detail-value" id="jobHours"></div>
+          </div>
+        </div>
+        <div class="detail-row" id="notesRow" style="display:none">
+          <div class="detail-icon">📝</div>
+          <div class="detail-content">
+            <div class="detail-label">Notes</div>
+            <div class="detail-value notes-value" id="jobNotes"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pin-section">
+      <div class="pin-title">Enter your PIN to claim</div>
+      <div class="pin-sub">First to enter their PIN gets the job. Be quick!</div>
+      <div class="pin-inputs">
+        <input class="pin-digit" id="p1" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="pin-digit" id="p2" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="pin-digit" id="p3" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="pin-digit" id="p4" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <div class="pin-error" id="pinError">Incorrect PIN. Please try again.</div>
+      <button class="claim-btn" id="claimBtn" disabled>
+        <div class="spinner-sm" id="claimSpinner"></div>
+        <span id="claimBtnText">Claim This Job</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-success">
+    <div class="success-wrap">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Job Claimed!</div>
+      <div class="success-sub">You got it. Full details below.<br>An SMS confirmation is on its way.</div>
+    </div>
+    <div class="success-card"><div class="sc-label">Client</div><div class="sc-value" id="s-client"></div></div>
+    <div class="success-card"><div class="sc-label">Address</div><div class="sc-value" id="s-address"></div></div>
+    <div class="success-card"><div class="sc-label">Date &amp; Time</div><div class="sc-value" id="s-date"></div></div>
+    <div class="success-card"><div class="sc-label">Estimated Hours</div><div class="sc-value" id="s-hours"></div></div>
+    <div class="success-card" id="s-notes-card" style="display:none"><div class="sc-label">Notes</div><div class="sc-value" id="s-notes"></div></div>
+    <div class="sms-notice">📱 SMS confirmation sent to your phone and your manager.</div>
+  </div>
+
+  <div class="screen" id="screen-taken">
+    <div class="taken-wrap">
+      <div class="taken-icon">⚡</div>
+      <div class="taken-title">Already Claimed</div>
+      <div class="taken-sub">Someone got there first!<br>You'll get an SMS when the next job comes in.</div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-error">
+    <div class="error-wrap">
+      <div class="error-icon">⚠️</div>
+      <div class="error-title">Link Not Found</div>
+      <div class="error-sub">This link may have expired or is invalid.<br>Contact your manager if you think this is a mistake.</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// =============================================
+// CONFIG — PASTE YOUR VALUES HERE
+// =============================================
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+// =============================================
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+const params = new URLSearchParams(window.location.search);
+const token  = params.get('t');
+let jobData = null, tokenRow = null;
+
+async function init() {
+  if (!token) { show('error'); return; }
+
+  const { data: tok, error } = await sb
+    .from('claim_tokens')
+    .select('*, jobs(*)')
+    .eq('token', token)
+    .single();
+
+  if (error || !tok) { show('error'); return; }
+  if (tok.used || tok.jobs.status !== 'open') { show('taken'); return; }
+
+  tokenRow = tok;
+  jobData  = tok.jobs;
+
+  document.getElementById('jobClient').textContent  = jobData.client_name;
+  document.getElementById('jobAddress').textContent = jobData.address;
+  document.getElementById('jobHours').textContent   = jobData.estimated_hours + ' hours';
+
+  const d = new Date(jobData.job_date);
+  document.getElementById('jobDate').textContent =
+    d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' }) +
+    ' at ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+
+  if (jobData.notes) {
+    document.getElementById('jobNotes').textContent = jobData.notes;
+    document.getElementById('notesRow').style.display = 'flex';
+  }
+
+  show('claim');
+  document.getElementById('p1').focus();
+}
+
+// PIN auto-advance
+const digits = ['p1','p2','p3','p4'];
+digits.forEach((id, i) => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    el.value = el.value.replace(/\D/g,'').slice(0,1);
+    if (el.value && i < 3) document.getElementById(digits[i+1]).focus();
+    document.getElementById('claimBtn').disabled = getPin().length < 4;
+    clearPinError();
+  });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !el.value && i > 0)
+      document.getElementById(digits[i-1]).focus();
+  });
+});
+
+function getPin() { return digits.map(id => document.getElementById(id).value).join(''); }
+function clearPinError() { document.getElementById('pinError').style.display='none'; digits.forEach(id=>document.getElementById(id).classList.remove('error')); }
+function showPinError() {
+  document.getElementById('pinError').style.display='block';
+  digits.forEach(id=>{ document.getElementById(id).classList.add('error'); document.getElementById(id).value=''; });
+  document.getElementById('p1').focus();
+  document.getElementById('claimBtn').disabled=true;
+}
+
+document.getElementById('claimBtn').addEventListener('click', async () => {
+  const pin = getPin();
+  const btn = document.getElementById('claimBtn');
+  const spinner = document.getElementById('claimSpinner');
+  const btnText = document.getElementById('claimBtnText');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Claiming...';
+
+  // Verify PIN
+  const { data: worker, error: wErr } = await sb
+    .from('workers').select('*').eq('id', tokenRow.worker_id).single();
+
+  if (wErr || !worker) { show('error'); return; }
+
+  if (worker.pin !== pin) {
+    showPinError();
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Claim This Job';
+    return;
+  }
+
+  // Race-safe claim — .eq('status','open') means only one worker can ever win
+  const { error: claimErr } = await sb
+    .from('jobs')
+    .update({ status:'claimed', claimed_by:worker.id, claimed_at:new Date().toISOString() })
+    .eq('id', jobData.id)
+    .eq('status', 'open');
+
+  if (claimErr) { show('taken'); return; }
+
+  // Mark all tokens for this job as used
+  await sb.from('claim_tokens').update({ used:true }).eq('job_id', jobData.id);
+
+  // Populate success screen
+  const d = new Date(jobData.job_date);
+  const dateStr = d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}) +
+    ' at ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('s-client').textContent  = jobData.client_name;
+  document.getElementById('s-address').textContent = jobData.address;
+  document.getElementById('s-date').textContent    = dateStr;
+  document.getElementById('s-hours').textContent   = jobData.estimated_hours + ' hours';
+
+  if (jobData.notes) {
+    document.getElementById('s-notes').textContent = jobData.notes;
+    document.getElementById('s-notes-card').style.display = 'block';
+  }
+
+  show('success');
+  // SMS confirmation fires via Supabase Edge Function once Twilio is connected (Phase 3)
+});
+
+init();
+</script>
+</body>
+</html>
