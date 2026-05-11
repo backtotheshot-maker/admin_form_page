@@ -3,8 +3,8 @@
 //  Paste your credentials below.
 //  Find them in: Supabase Dashboard → Settings → API
 // ============================================================
-const SUPABASE_URL     = 'YOUR_SUPABASE_URL';        // e.g. https://abcdefgh.supabase.co
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';  // long string starting with eyJ...
+const SUPABASE_URL     = 'https://kxymdahuzcgpgwrenazr.supabase.co';        // e.g. https://abcdefgh.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4eW1kYWh1emNncGd3cmVuYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0ODc0MDQsImV4cCI6MjA5NDA2MzQwNH0.V3bMgCBzW3z21JaxmtAkJBAKezAVtM_BmUmyUvU0pjk';  // long string starting with eyJ...
 // ============================================================
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
