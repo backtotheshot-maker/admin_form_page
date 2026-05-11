@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Dispatch — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #1a2e1a;
+    --green-mid: #2d5a27;
+    --green-bright: #4a9e3f;
+    --green-pale: #d4edcc;
+    --cream: #f5f2eb;
+    --ink: #1a1a18;
+    --ink-mid: #3d3d38;
+    --ink-faint: #8a8a82;
+    --border: #c8c4b8;
+    --white: #ffffff;
+    --red: #c0392b;
+    --amber: #e67e22;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Header bar */
+  .header {
+    background: var(--green-dark);
+    color: var(--green-pale);
+    padding: 18px 40px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    border-bottom: 3px solid var(--green-bright);
+  }
+
+  .header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: -0.3px;
+  }
+
+  .header .sub {
+    font-size: 11px;
+    color: var(--green-bright);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Layout */
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 32px;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* Form card */
+  .form-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--green-bright);
+  }
+
+  .form-card-header {
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .form-card-header .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green-bright);
+  }
+
+  .form-card-header h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--ink);
+  }
+
+  form { padding: 28px; }
+
+  .field { margin-bottom: 20px; }
+
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    border-radius: 0;
+    appearance: none;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--green-bright);
+    background: var(--white);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Hours stepper */
+  .hours-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .hours-wrap input {
+    text-align: center;
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .hours-btn {
+    width: 38px; height: 42px;
+    background: var(--green-dark);
+    color: var(--white);
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: background 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .hours-btn:hover { background: var(--green-mid); }
+
+  /* Submit */
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--green-mid);
+    color: var(--white);
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 8px;
+  }
+
+  .submit-btn:hover { background: var(--green-dark); }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { background: var(--ink-faint); cursor: not-allowed; }
+
+  /* Status message */
+  .status-msg {
+    margin-top: 14px;
+    padding: 12px 16px;
+    font-size: 12px;
+    display: none;
+    border-left: 3px solid;
+  }
+
+  .status-msg.success {
+    display: block;
+    background: #edf7eb;
+    border-color: var(--green-bright);
+    color: var(--green-mid);
+  }
+
+  .status-msg.error {
+    display: block;
+    background: #fdf0ee;
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  /* Sidebar */
+  .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+  .info-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .info-card h3 {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+  }
+
+  /* Job log */
+  .job-log { list-style: none; }
+
+  .job-log li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .job-log li:last-child { border-bottom: none; }
+
+  .job-log .job-client {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .job-log .job-meta {
+    color: var(--ink-faint);
+    font-size: 11px;
+  }
+
+  .job-log .job-status {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    margin-top: 4px;
+  }
+
+  .job-status.open { background: var(--green-pale); color: var(--green-mid); }
+  .job-status.claimed { background: #fef3e2; color: var(--amber); }
+  .job-status.completed { background: #f0f0f0; color: var(--ink-faint); }
+
+  .empty-log {
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+    padding: 8px 0;
+  }
+
+  /* Config notice */
+  .config-notice {
+    background: #fff8e6;
+    border: 1px solid #f0d080;
+    padding: 14px 16px;
+    font-size: 11px;
+    color: #7a5c00;
+    line-height: 1.6;
+  }
+
+  .config-notice strong { display: block; margin-bottom: 4px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* Spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 720px) {
+    .page { grid-template-columns: 1fr; padding: 20px 16px; }
+    .header { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Job Dispatch</h1>
+  <span class="sub">Admin Portal</span>
+</div>
+
+<div class="page">
+
+  <!-- Main form -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="dot"></div>
+      <h2>New Job</h2>
+    </div>
+
+    <form id="jobForm">
+
+      <div class="field">
+        <label>Client Name</label>
+        <input type="text" id="clientName" placeholder="e.g. Mrs. Thompson" required>
+      </div>
+
+      <div class="field">
+        <label>Address</label>
+        <input type="text" id="address" placeholder="Full address including postcode" required>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="jobDate" required>
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="jobTime" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Estimated Hours</label>
+        <div class="hours-wrap">
+          <button type="button" class="hours-btn" onclick="adjustHours(-0.5)">−</button>
+          <input type="number" id="estHours" value="2" min="0.5" max="12" step="0.5" style="width:80px">
+          <button type="button" class="hours-btn" onclick="adjustHours(0.5)">+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notes / Special Instructions</label>
+        <textarea id="notes" placeholder="e.g. Access via side gate, dog on premises, bring hedging shears..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        Dispatch Job
+      </button>
+
+      <div class="status-msg" id="statusMsg"></div>
+
+    </form>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <div class="config-notice">
+      <strong>⚙ Setup required</strong>
+      Open this file, find the CONFIG section near the bottom, and paste in your Supabase URL and anon key. Both are in your Supabase project under Settings → API.
+    </div>
+
+    <div class="info-card">
+      <h3>Recent Jobs</h3>
+      <ul class="job-log" id="jobLog">
+        <li><span class="empty-log">No jobs yet — create one above</span></li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>System Status</h3>
+      <div id="sysStatus" style="font-size:12px; color: var(--ink-faint);">
+        Checking database connection...
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// =============================================
+// CONFIG — PASTE YOUR VALUES HERE
+// =============================================
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';   // e.g. https://xyzxyz.supabase.co
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+// =============================================
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Set default date to today
+document.getElementById('jobDate').valueAsDate = new Date();
+
+// Hours stepper
+function adjustHours(delta) {
+  const el = document.getElementById('estHours');
+  const val = parseFloat(el.value) + delta;
+  if (val >= 0.5 && val <= 12) el.value = val;
+}
+
+// Check DB connection on load
+async function checkConnection() {
+  const el = document.getElementById('sysStatus');
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+    el.innerHTML = '<span style="color:var(--amber)">⚠ Not connected — add your Supabase keys</span>';
+    return;
+  }
+  const { error } = await supabase.from('jobs').select('id').limit(1);
+  if (error) {
+    el.innerHTML = '<span style="color:var(--red)">✗ Database error: ' + error.message + '</span>';
+  } else {
+    el.innerHTML = '<span style="color:var(--green-bright)">✓ Database connected</span>';
+    loadRecentJobs();
+  }
+}
+
+// Load recent jobs into sidebar
+async function loadRecentJobs() {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('client_name, job_date, estimated_hours, status')
+    .order('created_at', { ascending: false })
+    .limit(6);
+
+  if (error || !data) return;
+
+  const log = document.getElementById('jobLog');
+  if (data.length === 0) {
+    log.innerHTML = '<li><span class="empty-log">No jobs yet — create one above</span></li>';
+    return;
+  }
+
+  log.innerHTML = data.map(j => {
+    const d = new Date(j.job_date);
+    const dateStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+    const timeStr = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    return `<li>
+      <div class="job-client">${j.client_name}</div>
+      <div class="job-meta">${dateStr} at ${timeStr} · ${j.estimated_hours}h</div>
+      <span class="job-status ${j.status}">${j.status}</span>
+    </li>`;
+  }).join('');
+}
+
+// Submit form
+document.getElementById('jobForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('statusMsg');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Dispatching...';
+  msg.className = 'status-msg';
+  msg.style.display = 'none';
+
+  const dateVal = document.getElementById('jobDate').value;
+  const timeVal = document.getElementById('jobTime').value;
+  const jobDatetime = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+
+  const { error } = await supabase.from('jobs').insert({
+    client_name:     document.getElementById('clientName').value.trim(),
+    address:         document.getElementById('address').value.trim(),
+    job_date:        jobDatetime,
+    estimated_hours: parseFloat(document.getElementById('estHours').value),
+    notes:           document.getElementById('notes').value.trim() || null,
+    status:          'open'
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Dispatch Job';
+
+  if (error) {
+    msg.textContent = 'Error: ' + error.message;
+    msg.className = 'status-msg error';
+  } else {
+    msg.textContent = '✓ Job dispatched and saved to database.';
+    msg.className = 'status-msg success';
+    e.target.reset();
+    document.getElementById('jobDate').valueAsDate = new Date();
+    document.getElementById('estHours').value = 2;
+    loadRecentJobs();
+  }
+});
+
+checkConnection();
+</script>
+</body>
+</html>
